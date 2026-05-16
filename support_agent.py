@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Refund, RefundStatus, Warranty, Delivery, Order
+from models import Refund, RefundStatus, Warranty, Delivery
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
@@ -31,32 +31,90 @@ class SupportAgent:
             query = query.filter(Delivery.tracking_number == tracking_number)
         return query.all()
 
+    def create_refund_request(self, order_id: int, customer_name: str = "Customer", reason: str = "Requested via chat"):
+        refund = Refund(
+            order_id=order_id,
+            customer_name=customer_name,
+            reason=reason,
+            amount=0,
+            status=RefundStatus.pending
+        )
+        self.db.add(refund)
+        self.db.commit()
+        self.db.refresh(refund)
+        return refund
+
+    def create_warranty(self, order_id: int, product_id: int = None, customer_name: str = "Customer"):
+        start = datetime.now()
+        end = start + timedelta(days=365)
+        warranty = Warranty(
+            order_id=order_id,
+            product_id=product_id,
+            customer_name=customer_name,
+            start_date=start,
+            end_date=end,
+            is_active="active"
+        )
+        self.db.add(warranty)
+        self.db.commit()
+        self.db.refresh(warranty)
+        return warranty
+
+    def create_delivery(self, order_id: int, carrier: str = "Standard", status: str = "processing"):
+        delivery = Delivery(
+            order_id=order_id,
+            carrier=carrier,
+            status=status,
+            estimated_delivery=datetime.now() + timedelta(days=3)
+        )
+        self.db.add(delivery)
+        self.db.commit()
+        self.db.refresh(delivery)
+        return delivery
+
     def process_query(self, query: str) -> str:
         query_lower = query.lower()
+        order_id = self._extract_order_id(query)
 
         if "refund" in query_lower:
-            order_id = self._extract_order_id(query)
-            refunds = self.get_refund_status(order_id)
-            if refunds:
-                r = refunds[0]
+            existing = self.get_refund_status(order_id)
+            if existing:
+                r = existing[0]
                 return f"Refund #{r.id} for Order #{r.order_id}: Status: {r.status.value}, Amount: ${r.amount or 0:.2f}, Reason: {r.reason or 'N/A'}"
-            return "No refund found. To request a refund, please provide your order ID. Refunds are processed within 3-5 business days."
+
+            create_words = ["want", "request", "create", "make", "apply", "need", "please"]
+            if any(w in query_lower for w in create_words) and order_id:
+                customer = "Customer"
+                refund = self.create_refund_request(order_id, customer)
+                return f"✅ Refund request #{refund.id} created for Order #{order_id}. Status: Pending. We'll process it within 3-5 business days."
+            return "To request a refund, say 'I want a refund for order [number]' and I'll create it for you."
 
         elif "warranty" in query_lower:
-            order_id = self._extract_order_id(query)
-            warranties = self.get_warranty_status(order_id)
-            if warranties:
-                w = warranties[0]
+            existing = self.get_warranty_status(order_id)
+            if existing:
+                w = existing[0]
                 return f"Warranty for Order #{w.order_id}: Status: {w.is_active}, Start: {w.start_date.date()}, End: {w.end_date.date() if w.end_date else 'N/A'}"
-            return "No warranty found. Our standard warranty covers 12 months from purchase date. Please provide your order ID."
+
+            create_words = ["want", "request", "create", "check", "need", "start", "register"]
+            if any(w in query_lower for w in create_words) and order_id:
+                warranty = self.create_warranty(order_id, customer_name="Customer")
+                return f"✅ Warranty registered for Order #{order_id}. Covers 12 months from {warranty.start_date.date()}."
+            return "To register a warranty, say 'Register warranty for order [number]'. Standard warranty covers 12 months."
 
         elif "delivery" in query_lower or "shipping" in query_lower or "track" in query_lower:
-            order_id = self._extract_order_id(query)
-            deliveries = self.get_delivery_status(order_id)
-            if deliveries:
-                d = deliveries[0]
-                return f"Delivery for Order #{d.order_id}: Status: {d.status}, Carrier: {d.carrier or 'N/A'}, Tracking: {d.tracking_number or 'N/A'}, Estimated: {d.estimated_delivery.date() if d.estimated_delivery else 'N/A'}"
-            return "No delivery found. Standard delivery takes 2-3 business days. Please provide your order ID to track."
+            if order_id:
+                existing = self.get_delivery_status(order_id)
+                if existing:
+                    d = existing[0]
+                    return f"Delivery for Order #{d.order_id}: Status: {d.status}, Carrier: {d.carrier or 'N/A'}, Tracking: {d.tracking_number or 'N/A'}, Estimated: {d.estimated_delivery.date() if d.estimated_delivery else 'N/A'}"
+
+                create_words = ["want", "track", "check", "where", "status", "create"]
+                if any(w in query_lower for w in create_words):
+                    delivery = self.create_delivery(order_id)
+                    return f"📦 Delivery created for Order #{order_id}. Status: {delivery.status}, Estimated delivery: {delivery.estimated_delivery.date()}. Standard delivery takes 2-3 business days."
+            else:
+                return "Please provide your order ID to track delivery, e.g., 'Track delivery for order 1'."
+            return "Standard delivery takes 2-3 business days. Please provide your order ID to check status."
 
         elif "faq" in query_lower or "help" in query_lower:
             return "FAQs:\n1. How to track order? Use your order ID.\n2. Refund policy? 30-day money back.\n3. Warranty? 12 months standard.\n4. Delivery? 2-3 business days standard."

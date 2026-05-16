@@ -1,14 +1,16 @@
 import pytest
 from fastapi.testclient import TestClient
 from main import app
-from database import get_db, engine
+from database import get_db, engine, is_mystore_configured
 from models import Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 TEST_DB_URL = "sqlite:///./test.db"
 test_engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
@@ -39,26 +41,16 @@ def test_root(client):
     assert response.status_code == 200
     assert "message" in response.json()
 
-def test_create_product(client, api_headers):
-    response = client.post("/products", json={"name": "Test Product", "price": 99.99, "category": "Test"}, headers=api_headers)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["name"] == "Test Product"
-    assert data["price"] == 99.99
-
-def test_list_products(client, api_headers):
-    response = client.get("/products", headers=api_headers)
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
-
-def test_create_order(client, api_headers):
-    products = client.get("/products", headers=api_headers).json()
-    if products:
-        product_id = products[0]["id"]
-        response = client.post("/orders", json={"customer_name": "John Doe", "product_id": product_id, "quantity": 1}, headers=api_headers)
+def test_list_products_no_mystore(client, api_headers):
+    if not is_mystore_configured():
+        response = client.get("/products", headers=api_headers)
         assert response.status_code == 200
-        data = response.json()
-        assert data["customer_name"] == "John Doe"
+        assert isinstance(response.json(), list)
+
+def test_create_product_no_mystore(client, api_headers):
+    if not is_mystore_configured():
+        response = client.post("/products", json={"name": "Test", "price": 99.99}, headers=api_headers)
+        assert response.status_code == 400
 
 def test_chat_sales_query(client, api_headers):
     response = client.post("/chat", json={"query": "How many orders today?"}, headers=api_headers)

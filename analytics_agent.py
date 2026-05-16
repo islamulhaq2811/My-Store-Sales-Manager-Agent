@@ -1,23 +1,24 @@
 from sqlalchemy.orm import Session
-from models import Order, SalesLog, Product, Order as OrderModel
-from sqlalchemy import func, extract
+from sqlalchemy import func
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from mystore_models import MystoreOrder, MystoreProduct
 import json
 
-
 class AnalyticsAgent:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, mystore_db: Session = None):
         self.db = db
+        self.mystore_db = mystore_db
 
     def get_sales_trends(self, days: int = 30):
+        if not self.mystore_db:
+            return []
         start_date = datetime.now() - timedelta(days=days)
-        daily_sales = self.db.query(
-            func.date(OrderModel.created_at).label('date'),
-            func.sum(OrderModel.total_amount).label('revenue'),
-            func.count(OrderModel.id).label('orders')
-        ).filter(OrderModel.created_at >= start_date).group_by(
-            func.date(OrderModel.created_at)
+        daily_sales = self.mystore_db.query(
+            func.date(MystoreOrder.order_date).label('date'),
+            func.sum(MystoreOrder.total_amount).label('revenue'),
+            func.count(MystoreOrder.id).label('orders')
+        ).filter(MystoreOrder.order_date >= start_date).group_by(
+            func.date(MystoreOrder.order_date)
         ).all()
 
         return [
@@ -26,23 +27,30 @@ class AnalyticsAgent:
         ]
 
     def get_customer_behavior(self):
-        total_customers = self.db.query(OrderModel.customer_name).distinct().count()
-        total_orders = self.db.query(OrderModel).count()
+        if not self.mystore_db:
+            return {"total_unique_customers": 0, "total_orders": 0, "avg_orders_per_customer": 0, "repeat_customer_rate": 0}
+        total_customers = self.mystore_db.query(MystoreOrder.customer_name).distinct().count()
+        total_orders = self.mystore_db.query(MystoreOrder).count()
         avg_orders = total_orders / total_customers if total_customers > 0 else 0
 
         return {
             "total_unique_customers": total_customers,
             "total_orders": total_orders,
             "avg_orders_per_customer": round(avg_orders, 2),
-            "repeat_customer_rate": round((1 - (total_customers / total_orders)) * 100, 2) if total_orders > 0 else 0
+            "repeat_customer_rate": round((1 - (total_customers / total_orders)) * 100, 2) if total_orders > 0 else 0,
+            "source": "mystore"
         }
 
     def forecast_sales(self, days_ahead: int = 7):
-        recent_orders = self.db.query(OrderModel).order_by(OrderModel.created_at.desc()).limit(30).all()
+        if not self.mystore_db:
+            return {"forecast": 0, "confidence": "low", "source": "no_data"}
+        recent_orders = self.mystore_db.query(MystoreOrder).order_by(
+            MystoreOrder.order_date.desc()
+        ).limit(30).all()
         if not recent_orders:
-            return {"forecast": 0, "confidence": "low"}
+            return {"forecast": 0, "confidence": "low", "source": "mystore"}
 
-        recent_revenue = [o.total_amount for o in recent_orders[:7]]
+        recent_revenue = [float(o.total_amount or 0) for o in recent_orders[:7]]
         avg_daily = sum(recent_revenue) / len(recent_revenue) if recent_revenue else 0
         forecast = avg_daily * days_ahead
 
@@ -50,52 +58,62 @@ class AnalyticsAgent:
             "period_days": days_ahead,
             "forecast_revenue": round(forecast, 2),
             "avg_daily_revenue": round(avg_daily, 2),
-            "confidence": "high" if len(recent_orders) >= 30 else "medium"
+            "confidence": "high" if len(recent_orders) >= 30 else "medium",
+            "source": "mystore"
         }
 
     def get_product_performance(self):
-        results = self.db.query(
-            Product.name,
-            func.sum(SalesLog.quantity).label('total_sold'),
-            func.sum(SalesLog.revenue).label('total_revenue')
-        ).join(SalesLog, Product.id == SalesLog.product_id).group_by(
-            Product.id, Product.name
-        ).order_by(func.sum(SalesLog.revenue).desc()).all()
+        if not self.mystore_db:
+            return []
+        products = self.mystore_db.query(MystoreProduct).order_by(
+            MystoreProduct.reviews.desc()
+        ).all()
 
         return [
-            {"product": r[0], "units_sold": r[1] or 0, "revenue": float(r[2] or 0)}
-            for r in results
+            {"product": p.name, "price": float(p.price or 0), "reviews": p.reviews or 0, "rating": float(p.rating or 0), "category": p.category}
+            for p in products
         ]
 
     def get_kpi_dashboard(self):
+        if not self.mystore_db:
+            return {
+                "monthly_revenue": 0, "monthly_orders": 0, "avg_order_value": 0,
+                "total_products": 0, "conversion_rate": 0, "source": "no_data"
+            }
         today = datetime.now()
         start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-        monthly_orders = self.db.query(OrderModel).filter(
-            OrderModel.created_at >= start_of_month
+        monthly_orders = self.mystore_db.query(MystoreOrder).filter(
+            MystoreOrder.order_date >= start_of_month
         ).count()
 
-        monthly_revenue = self.db.query(
-            func.sum(OrderModel.total_amount)
-        ).filter(OrderModel.created_at >= start_of_month).scalar() or 0
+        monthly_revenue = self.mystore_db.query(
+            func.sum(MystoreOrder.total_amount)
+        ).filter(MystoreOrder.order_date >= start_of_month).scalar() or 0
+
+        total_products = self.mystore_db.query(MystoreProduct).count()
 
         return {
             "monthly_revenue": float(monthly_revenue),
             "monthly_orders": monthly_orders,
             "avg_order_value": round(float(monthly_revenue) / monthly_orders, 2) if monthly_orders > 0 else 0,
+            "total_products": total_products,
             "conversion_rate": 3.2,
-            "customer_satisfaction": 4.5
+            "customer_satisfaction": 4.5,
+            "source": "mystore"
         }
 
     def process_query(self, query: str) -> str:
         query_lower = query.lower()
+        if not self.mystore_db:
+            return "Mystore database not connected."
 
         if "trend" in query_lower or "trends" in query_lower:
             trends = self.get_sales_trends(7)
             if trends:
                 avg = sum(t["revenue"] for t in trends) / len(trends)
                 return f"7-day sales trends: Avg daily revenue ${avg:.2f}. {len(trends)} days of data."
-            return "No trend data available yet."
+            return "No trend data in your store yet."
 
         elif "forecast" in query_lower or "predict" in query_lower:
             forecast = self.forecast_sales(7)
@@ -107,14 +125,14 @@ class AnalyticsAgent:
 
         elif "kpi" in query_lower or "dashboard" in query_lower or "metrics" in query_lower:
             kpi = self.get_kpi_dashboard()
-            return f"KPIs: Monthly ${kpi['monthly_revenue']:.2f} revenue, {kpi['monthly_orders']} orders, AOV ${kpi['avg_order_value']:.2f}, {kpi['conversion_rate']}% conversion"
+            return f"KPIs: Monthly ${kpi['monthly_revenue']:.2f} revenue, {kpi['monthly_orders']} orders, AOV ${kpi['avg_order_value']:.2f}, {kpi['total_products']} products"
 
         elif "performance" in query_lower:
             perf = self.get_product_performance()
             if perf:
                 top = perf[0]
-                return f"Top performer: {top['product']} (${top['revenue']:.2f} from {top['units_sold']} units)"
-            return "No performance data yet."
+                return f"Top performer: {top['product']} (${top['price']:.2f}, {top['reviews']} reviews, rating: {top['rating']})"
+            return "No products in your store yet."
 
         else:
-            return "Analytics Agent: I analyze trends, forecasts, customer behavior, and KPIs. Try: 'Show sales trends' or 'Forecast next week sales'"
+            return "Analytics Agent: I analyze trends, forecasts, customer behavior, and KPIs from your store."

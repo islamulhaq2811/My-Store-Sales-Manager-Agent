@@ -31,7 +31,7 @@ function SalesReport() {
     }
   }
 
-  if (loading) return <div className="loading">Loading sales data...</div>
+  if (loading) return <div className="loading"><div className="loading-spinner" /> Loading sales data...</div>
 
   return (
     <div className="sales-container">
@@ -43,100 +43,103 @@ function SalesReport() {
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
-          className="period-selector"
+          className="period-select"
         >
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
+          <option value="daily">Today</option>
+          <option value="weekly">This Week</option>
+          <option value="monthly">This Month</option>
         </select>
       </div>
 
-      {/* Stats Cards */}
       <div className="stats-grid">
-        <div className="stat-card primary">
-          <span className="stat-icon">📊</span>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed' }}>#</div>
           <div className="stat-content">
             <p className="stat-label">Total Orders</p>
             <p className="stat-value">{report?.total_orders || 0}</p>
           </div>
         </div>
-        <div className="stat-card success">
-          <span className="stat-icon">💰</span>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>$</div>
           <div className="stat-content">
             <p className="stat-label">Revenue</p>
             <p className="stat-value">${report?.total_revenue?.toFixed(2) || '0.00'}</p>
           </div>
         </div>
-        <div className="stat-card warning">
-          <span className="stat-icon">📦</span>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>O</div>
           <div className="stat-content">
             <p className="stat-label">Today's Orders</p>
             <p className="stat-value">{ordersToday?.count || 0}</p>
           </div>
         </div>
-        <div className="stat-card info">
-          <span className="stat-icon">📈</span>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(6,182,212,0.1)', color: '#06b6d4' }}>P</div>
           <div className="stat-content">
-            <p className="stat-label">Period</p>
-            <p className="stat-value" style={{fontSize: '18px'}}>{period.charAt(0).toUpperCase() + period.slice(1)}</p>
+            <p className="stat-label">{period.charAt(0).toUpperCase() + period.slice(1)}</p>
+            <p className="stat-value" style={{ fontSize: '20px' }}>{report?.period || period}</p>
           </div>
         </div>
       </div>
 
-      {/* Top Products */}
-      <div className="top-products-section">
-        <h4>🏆 Top Selling Products</h4>
-        <div className="top-products-list">
+      <div className="sales-grid">
+        <div className="card">
+          <h4>
+            Top Selling Products
+          </h4>
           {topProducts.length === 0 ? (
             <p className="no-data">No sales data available yet.</p>
           ) : (
-            topProducts.map((product, idx) => (
-              <div key={idx} className="top-product-item">
-                <div className="rank-badge">{idx + 1}</div>
-                <div className="product-details">
-                  <p className="product-name">{product.product_name}</p>
-                  <p className="product-stats">{product.total_sold} sold · ${product.total_revenue?.toFixed(2)}</p>
+            <div className="rank-list">
+              {topProducts.map((product, idx) => (
+                <div key={idx} className="rank-item">
+                  <div className="rank-badge">{idx + 1}</div>
+                  <div className="rank-details">
+                    <p className="rank-name">{product.product_name}</p>
+                    <p className="rank-stats">{product.total_sold} sold · ${product.total_revenue?.toFixed(2)}</p>
+                  </div>
+                  <div className="rank-bar">
+                    <div
+                      className="rank-fill"
+                      style={{ width: `${Math.min(100, (product.total_revenue / (topProducts[0]?.total_revenue || 1)) * 100)}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="revenue-bar">
-                  <div
-                    className="revenue-fill"
-                    style={{width: `${Math.min(100, (product.total_revenue / (topProducts[0]?.total_revenue || 1)) * 100)}%`}}
-                  ></div>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Recent Orders */}
-      {ordersToday && ordersToday.orders && ordersToday.orders.length > 0 && (
-        <div className="recent-orders-section">
-          <h4>📋 Today's Orders</h4>
-          <div className="orders-table-wrapper">
-            <table className="orders-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordersToday.orders.slice(0, 5).map(order => (
-                  <tr key={order.id}>
-                    <td>#{order.id}</td>
-                    <td>{order.customer_name}</td>
-                    <td>${order.total_amount?.toFixed(2)}</td>
-                    <td><span className={`status-badge ${order.status}`}>{order.status}</span></td>
+        {ordersToday && ordersToday.orders && ordersToday.orders.length > 0 && (
+          <div className="card">
+            <h4>
+            Today's Orders
+            </h4>
+            <div className="table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {ordersToday.orders.slice(0, 5).map(order => (
+                    <tr key={order.id}>
+                      <td><span className="order-id">#{order.id}</span></td>
+                      <td>{order.customer_name}</td>
+                      <td className="amount-cell">${order.total_amount?.toFixed(2)}</td>
+                      <td><span className={`status-badge ${order.status}`}>{order.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

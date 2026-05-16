@@ -1,9 +1,8 @@
 from sqlalchemy.orm import Session
-from models import InventoryItem, StockAlert, Product, Supplier, PurchaseOrder, Order
+from models import InventoryItem, StockAlert, Supplier, PurchaseOrder
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
-
 
 class InventoryAgent:
     def __init__(self, db: Session):
@@ -62,14 +61,10 @@ class InventoryAgent:
         low_stock = self.db.query(InventoryItem).filter(
             InventoryItem.quantity_in_stock <= InventoryItem.reorder_point
         ).count()
-        total_value = self.db.query(
-            func.sum(InventoryItem.quantity_in_stock * Product.price)
-        ).join(Product, InventoryItem.product_id == Product.id).scalar() or 0
 
         return {
             "total_products": total_items,
             "low_stock_count": low_stock,
-            "total_inventory_value": round(float(total_value), 2),
             "stock_health": "Good" if low_stock == 0 else "Attention Needed"
         }
 
@@ -88,16 +83,12 @@ class InventoryAgent:
         return supplier
 
     def create_purchase_order(self, supplier_id: int, product_id: int, quantity: int):
-        product = self.db.query(Product).filter(Product.id == product_id).first()
-        if not product:
-            return None
-        total = product.price * quantity
         po = PurchaseOrder(
             supplier_id=supplier_id,
             product_id=product_id,
             quantity=quantity,
-            unit_price=product.price,
-            total_amount=total
+            unit_price=0,
+            total_amount=0
         )
         self.db.add(po)
         self.db.commit()
@@ -115,12 +106,12 @@ class InventoryAgent:
 
         if "stock" in query_lower or "inventory" in query_lower:
             status = self.get_inventory_status()
-            return f"Inventory: {status['total_products']} products, ${status['total_inventory_value']:.2f} value. Status: {status['stock_health']}"
+            return f"Inventory: {status['total_products']} products tracked. Status: {status['stock_health']}"
 
         elif "low stock" in query_lower or "reorder" in query_lower:
             items = self.get_low_stock_items()
             if items:
-                item_list = [f"{i.product.name}: {i.quantity_in_stock} units" for i in items[:3]]
+                item_list = [f"Product #{i.product_id}: {i.quantity_in_stock} units" for i in items[:3]]
                 return f"Low stock alert: {'; '.join(item_list)}"
             return "All items are above reorder points."
 
@@ -138,8 +129,7 @@ class InventoryAgent:
             return f"Purchase Orders: {len(pos)} total, {len(pending)} pending."
 
         elif "value" in query_lower or "worth" in query_lower:
-            status = self.get_inventory_status()
-            return f"Total inventory value: ${status['total_inventory_value']:.2f}"
+            return "Inventory value tracking is available through Mystore product prices."
 
         else:
             return "Inventory Agent: I track stock, alerts, suppliers, and purchase orders. Try: 'Check stock levels' or 'Show low stock items'"

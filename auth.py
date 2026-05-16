@@ -2,8 +2,10 @@ from fastapi import Depends, HTTPException, Security
 from fastapi.security import APIKeyHeader
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 API_KEY = os.getenv("API_KEY", "your-secret-api-key-change-this")
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)

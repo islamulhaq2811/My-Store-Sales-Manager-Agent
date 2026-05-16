@@ -76,29 +76,60 @@ function Support() {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="support-actions">
-        <button className="support-action-card" onClick={() => setActiveForm(activeForm === 'refund' ? null : 'refund')}>
-          <span className="action-icon">🔄</span>
-          <span className="action-label">New Refund</span>
-          <span className="action-count">{refunds.length}</span>
+        <button
+          className={`support-card ${activeForm === 'refund' ? 'active' : ''}`}
+          onClick={() => setActiveForm(activeForm === 'refund' ? null : 'refund')}
+        >
+          <div className="support-card-icon gradient-purple">R</div>
+          <div className="support-card-body">
+            <span className="support-card-label">New Refund</span>
+            <div className="support-card-meta">
+              <span className="support-count">{refunds.length}</span>
+              <span className="support-count-label">total</span>
+            </div>
+          </div>
         </button>
-        <button className="support-action-card" onClick={() => setActiveForm(activeForm === 'warranty' ? null : 'warranty')}>
-          <span className="action-icon">🛡️</span>
-          <span className="action-label">New Warranty</span>
-          <span className="action-count">{warranties.length}</span>
+
+        <button
+          className={`support-card ${activeForm === 'warranty' ? 'active' : ''}`}
+          onClick={() => setActiveForm(activeForm === 'warranty' ? null : 'warranty')}
+        >
+          <div className="support-card-icon gradient-green">W</div>
+          <div className="support-card-body">
+            <span className="support-card-label">New Warranty</span>
+            <div className="support-card-meta">
+              <span className="support-count">{warranties.length}</span>
+              <span className="support-count-label">active</span>
+            </div>
+          </div>
         </button>
-        <button className="support-action-card" onClick={() => setActiveForm(activeForm === 'delivery' ? null : 'delivery')}>
-          <span className="action-icon">🚚</span>
-          <span className="action-label">Update Delivery</span>
-          <span className="action-count">{deliveries.length}</span>
+
+        <button
+          className={`support-card ${activeForm === 'delivery' ? 'active' : ''}`}
+          onClick={() => setActiveForm(activeForm === 'delivery' ? null : 'delivery')}
+        >
+          <div className="support-card-icon gradient-orange">D</div>
+          <div className="support-card-body">
+            <span className="support-card-label">Update Delivery</span>
+            <div className="support-card-meta">
+              <span className="support-count">{deliveries.length}</span>
+              <span className="support-count-label">records</span>
+            </div>
+          </div>
         </button>
       </div>
 
-      {/* Forms */}
       {activeForm === 'refund' && (
-        <div className="support-form-card">
-          <h4>Request Refund</h4>
+        <div className="form-card slide-in">
+          <div className="form-card-header">
+            <h4>Request Refund</h4>
+            <button className="btn-icon" onClick={() => setActiveForm(null)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
           <form onSubmit={handleRefund}>
             <div className="form-row">
               <div className="form-group">
@@ -128,8 +159,15 @@ function Support() {
       )}
 
       {activeForm === 'warranty' && (
-        <div className="support-form-card">
-          <h4>Register Warranty</h4>
+        <div className="form-card slide-in">
+          <div className="form-card-header">
+            <h4>Register Warranty</h4>
+            <button className="btn-icon" onClick={() => setActiveForm(null)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
           <form onSubmit={handleWarranty}>
             <div className="form-row">
               <div className="form-group">
@@ -152,11 +190,10 @@ function Support() {
         </div>
       )}
 
-      {/* Data Tables */}
       <div className="support-tables">
         {refunds.length > 0 && (
-          <div className="data-section">
-            <h4>🔄 Recent Refunds</h4>
+          <div className="card">
+            <h4>Recent Refunds</h4>
             <div className="table-wrapper">
               <table className="data-table">
                 <thead>
@@ -171,10 +208,10 @@ function Support() {
                 <tbody>
                   {refunds.slice(0, 5).map(r => (
                     <tr key={r.id}>
-                      <td>#{r.id}</td>
+                      <td><span className="order-id">#{r.id}</span></td>
                       <td>#{r.order_id}</td>
                       <td>{r.customer_name}</td>
-                      <td>${r.amount?.toFixed(2) || '0.00'}</td>
+                      <td className="amount-cell">${r.amount?.toFixed(2) || '0.00'}</td>
                       <td><span className={`status-badge ${r.status}`}>{r.status}</span></td>
                     </tr>
                   ))}
@@ -185,8 +222,8 @@ function Support() {
         )}
 
         {warranties.length > 0 && (
-          <div className="data-section">
-            <h4>🛡️ Active Warranties</h4>
+          <div className="card">
+            <h4>Active Warranties</h4>
             <div className="table-wrapper">
               <table className="data-table">
                 <thead>
@@ -201,10 +238,10 @@ function Support() {
                 <tbody>
                   {warranties.slice(0, 5).map(w => (
                     <tr key={w.id}>
-                      <td>#{w.id}</td>
+                      <td><span className="order-id">#{w.id}</span></td>
                       <td>#{w.order_id}</td>
                       <td>{w.customer_name}</td>
-                      <td><span className={`status-badge ${w.is_active}`}>{w.is_active}</span></td>
+                      <td><span className={`status-badge ${w.is_active === 'active' ? 'active' : 'expired'}`}>{w.is_active}</span></td>
                       <td>{w.end_date ? new Date(w.end_date).toLocaleDateString() : 'N/A'}</td>
                     </tr>
                   ))}

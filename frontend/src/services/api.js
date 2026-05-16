@@ -57,4 +57,12 @@ export const getPurchaseOrders = () => api.get('/inventory/purchase-orders');
 export const createPurchaseOrder = (po) => api.post('/inventory/purchase-orders', po);
 export const getAlerts = (unresolvedOnly = true) => api.get(`/inventory/alerts?unresolved_only=${unresolvedOnly}`);
 
+// Mystore
+export const getMystoreStatus = () => api.get('/mystore/status');
+export const getMystoreTables = () => api.get('/mystore/tables');
+export const getMystoreTableData = (tableName, limit = 50) => api.get(`/mystore/data/${tableName}?limit=${limit}`);
+export const getMystoreTableSchema = (tableName) => api.get(`/mystore/tables/${tableName}`);
+export const getMystoreStats = () => api.get('/mystore/stats');
+export const executeMystoreQuery = (query) => api.post('/mystore/query', { query });
+
 export default api;

@@ -1,8 +1,9 @@
 .marketing-container {
-  animation: fadeIn 0.5s ease;
+  animation: fadeIn 0.3s ease;
 }
 
-.marketing-actions {
+/* Action buttons */
+.action-buttons {
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
@@ -10,159 +11,101 @@
 }
 
 .action-btn {
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 2px solid var(--gray-light);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--gray-light);
   border-radius: var(--radius-sm);
-  font-weight: 500;
   font-size: 14px;
+  font-weight: 500;
   color: var(--dark);
+  transition: all 0.2s ease;
   box-shadow: var(--shadow);
-  transition: all 0.3s ease;
 }
 
 .action-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
-/* Form Card */
+.action-btn.active {
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.04);
+}
+
+.action-btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.action-btn-icon.gradient-purple { background: rgba(124, 58, 237, 0.1); }
+.action-btn-icon.gradient-green { background: rgba(16, 185, 129, 0.1); }
+.action-btn-icon.gradient-orange { background: rgba(245, 158, 11, 0.1); }
+
+.action-btn-label {
+  font-weight: 500;
+}
+
+/* Form card */
 .form-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
+  background: var(--surface);
   border-radius: var(--radius);
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: var(--shadow-lg);
-  animation: slideIn 0.3s ease;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0,0,0,0.04);
 }
 
-.form-card h4 {
-  font-size: 18px;
-  color: var(--dark);
+.form-card.slide-in {
+  animation: slideUp 0.3s ease;
+}
+
+.form-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 20px;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.form-group input, .form-group select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 2px solid var(--gray-light);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-.form-group input:focus, .form-group select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 12px;
-  background: var(--gradient);
-  color: white;
-  border-radius: var(--radius-sm);
+.form-card-header h4 {
+  font-size: 16px;
   font-weight: 600;
-  font-size: 15px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  color: var(--dark);
 }
 
-.submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
-}
-
-/* Data Sections */
+/* Data sections */
 .data-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
 }
 
-.data-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: var(--radius);
-  padding: 24px;
-  box-shadow: var(--shadow);
+@media (max-width: 900px) {
+  .data-sections {
+    grid-template-columns: 1fr;
+  }
 }
 
-.data-section h4 {
-  font-size: 18px;
-  color: var(--dark);
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th {
-  text-align: left;
-  padding: 12px;
-  font-size: 12px;
+/* Cell styles */
+.cell-name {
   font-weight: 600;
-  color: var(--gray);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid var(--gray-light);
 }
 
-.data-table td {
-  padding: 12px;
-  font-size: 14px;
-  color: var(--dark);
-  border-bottom: 1px solid var(--gray-light);
-}
-
-.data-table tr:hover td {
-  background: rgba(99, 102, 241, 0.02);
-}
-
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 12px;
+.cell-tag {
+  padding: 2px 8px;
+  background: var(--light);
+  border-radius: 4px;
   font-size: 12px;
+  color: var(--gray-dark);
   font-weight: 500;
-}
-
-.status-badge.active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-}
-
-.no-data {
-  text-align: center;
-  padding: 20px;
-  color: var(--gray);
-  font-style: italic;
 }

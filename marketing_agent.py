@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Campaign, Promotion, Lead, Product
+from models import Campaign, Promotion, Lead
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 

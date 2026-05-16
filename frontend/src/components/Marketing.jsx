@@ -61,7 +61,7 @@ function Marketing() {
     }
   }
 
-  if (loading) return <div className="loading">Loading marketing data...</div>
+  if (loading) return <div className="loading"><div className="loading-spinner" /> Loading marketing data...</div>
 
   return (
     <div className="marketing-container">
@@ -72,24 +72,23 @@ function Marketing() {
         </div>
       </div>
 
-      {/* Quick Stats */}
       <div className="stats-grid">
-        <div className="stat-card primary">
-          <span className="stat-icon">📢</span>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed' }}>M</div>
           <div className="stat-content">
             <p className="stat-label">Campaigns</p>
             <p className="stat-value">{campaigns.length}</p>
           </div>
         </div>
-        <div className="stat-card success">
-          <span className="stat-icon">🏷️</span>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>%</div>
           <div className="stat-content">
             <p className="stat-label">Promotions</p>
             <p className="stat-value">{promotions.length}</p>
           </div>
         </div>
-        <div className="stat-card warning">
-          <span className="stat-icon">🎯</span>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>L</div>
           <div className="stat-content">
             <p className="stat-label">Leads</p>
             <p className="stat-value">{leads.length}</p>
@@ -97,23 +96,40 @@ function Marketing() {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="marketing-actions">
-        <button className="action-btn" onClick={() => setActiveForm(activeForm === 'campaign' ? null : 'campaign')}>
-          📢 New Campaign
+      <div className="action-buttons">
+        <button
+          className={`action-btn ${activeForm === 'campaign' ? 'active' : ''}`}
+          onClick={() => setActiveForm(activeForm === 'campaign' ? null : 'campaign')}
+        >
+          <span className="action-btn-icon gradient-purple">C</span>
+          <span className="action-btn-label">New Campaign</span>
         </button>
-        <button className="action-btn" onClick={() => setActiveForm(activeForm === 'promotion' ? null : 'promotion')}>
-          🏷️ Create Promotion
+        <button
+          className={`action-btn ${activeForm === 'promotion' ? 'active' : ''}`}
+          onClick={() => setActiveForm(activeForm === 'promotion' ? null : 'promotion')}
+        >
+          <span className="action-btn-icon gradient-green">P</span>
+          <span className="action-btn-label">Create Promotion</span>
         </button>
-        <button className="action-btn" onClick={() => setActiveForm(activeForm === 'lead' ? null : 'lead')}>
-          🎯 Add Lead
+        <button
+          className={`action-btn ${activeForm === 'lead' ? 'active' : ''}`}
+          onClick={() => setActiveForm(activeForm === 'lead' ? null : 'lead')}
+        >
+          <span className="action-btn-icon gradient-orange">L</span>
+          <span className="action-btn-label">Add Lead</span>
         </button>
       </div>
 
-      {/* Forms */}
       {activeForm === 'campaign' && (
-        <div className="form-card">
-          <h4>New Campaign</h4>
+        <div className="form-card slide-in">
+          <div className="form-card-header">
+            <h4>New Campaign</h4>
+            <button className="btn-icon" onClick={() => setActiveForm(null)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
           <form onSubmit={handleCampaign}>
             <div className="form-row">
               <div className="form-group">
@@ -139,8 +155,15 @@ function Marketing() {
       )}
 
       {activeForm === 'promotion' && (
-        <div className="form-card">
-          <h4>New Promotion</h4>
+        <div className="form-card slide-in">
+          <div className="form-card-header">
+            <h4>New Promotion</h4>
+            <button className="btn-icon" onClick={() => setActiveForm(null)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
           <form onSubmit={handlePromotion}>
             <div className="form-row">
               <div className="form-group">
@@ -164,12 +187,13 @@ function Marketing() {
         </div>
       )}
 
-      {/* Data Tables */}
       <div className="data-sections">
-        <div className="data-section">
-          <h4>📢 Active Campaigns</h4>
-          <div className="table-wrapper">
-            {campaigns.length === 0 ? <p className="no-data">No campaigns yet.</p> : (
+        <div className="card">
+          <h4>Active Campaigns</h4>
+          {campaigns.length === 0 ? (
+            <p className="no-data">No campaigns yet.</p>
+          ) : (
+            <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr><th>Name</th><th>Type</th><th>Budget</th><th>Status</th></tr>
@@ -177,22 +201,24 @@ function Marketing() {
                 <tbody>
                   {campaigns.slice(0, 5).map(c => (
                     <tr key={c.id}>
-                      <td>{c.name}</td>
-                      <td>{c.campaign_type}</td>
+                      <td className="cell-name">{c.name}</td>
+                      <td><span className="cell-tag">{c.campaign_type}</span></td>
                       <td>${c.budget?.toFixed(2)}</td>
                       <td><span className="status-badge active">{c.status}</span></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        <div className="data-section">
-          <h4>🏷️ Active Promotions</h4>
-          <div className="table-wrapper">
-            {promotions.length === 0 ? <p className="no-data">No promotions yet.</p> : (
+        <div className="card">
+          <h4>Active Promotions</h4>
+          {promotions.length === 0 ? (
+            <p className="no-data">No promotions yet.</p>
+          ) : (
+            <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr><th>Name</th><th>Type</th><th>Value</th><th>Status</th></tr>
@@ -200,16 +226,16 @@ function Marketing() {
                 <tbody>
                   {promotions.slice(0, 5).map(p => (
                     <tr key={p.id}>
-                      <td>{p.name}</td>
-                      <td>{p.discount_type}</td>
+                      <td className="cell-name">{p.name}</td>
+                      <td><span className="cell-tag">{p.discount_type}</span></td>
                       <td>{p.discount_value}%</td>
                       <td><span className="status-badge active">{p.status}</span></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

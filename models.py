@@ -3,33 +3,6 @@ from sqlalchemy.sql import func
 from database import Base
 import enum
 
-class Product(Base):
-    __tablename__ = "products"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    price = Column(Float, nullable=False)
-    category = Column(String(50))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-class Order(Base):
-    __tablename__ = "orders"
-    id = Column(Integer, primary_key=True, index=True)
-    customer_name = Column(String(100), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"))
-    quantity = Column(Integer, nullable=False)
-    total_amount = Column(Float, nullable=False)
-    status = Column(String(20), default="pending")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-class SalesLog(Base):
-    __tablename__ = "sales_logs"
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"))
-    product_id = Column(Integer, ForeignKey("products.id"))
-    quantity = Column(Integer)
-    revenue = Column(Float)
-    date = Column(DateTime(timezone=True), server_default=func.now())
-
 class RefundStatus(enum.Enum):
     pending = "pending"
     approved = "approved"
@@ -39,7 +12,7 @@ class RefundStatus(enum.Enum):
 class Refund(Base):
     __tablename__ = "refunds"
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    order_id = Column(Integer, nullable=False)
     customer_name = Column(String(100), nullable=False)
     reason = Column(Text)
     status = Column(Enum(RefundStatus), default=RefundStatus.pending)
@@ -49,8 +22,8 @@ class Refund(Base):
 class Warranty(Base):
     __tablename__ = "warranties"
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"))
+    order_id = Column(Integer, nullable=False)
+    product_id = Column(Integer)
     customer_name = Column(String(100), nullable=False)
     start_date = Column(DateTime(timezone=True), server_default=func.now())
     end_date = Column(DateTime(timezone=True))
@@ -59,15 +32,13 @@ class Warranty(Base):
 class Delivery(Base):
     __tablename__ = "deliveries"
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    order_id = Column(Integer, nullable=False)
     tracking_number = Column(String(100))
     carrier = Column(String(50))
     status = Column(String(50), default="processing")
     estimated_delivery = Column(DateTime(timezone=True))
     delivered_at = Column(DateTime(timezone=True))
 
-
-# Marketing Models
 class Campaign(Base):
     __tablename__ = "campaigns"
     id = Column(Integer, primary_key=True, index=True)
@@ -88,7 +59,7 @@ class Promotion(Base):
     discount_value = Column(Float)
     start_date = Column(DateTime(timezone=True), server_default=func.now())
     end_date = Column(DateTime(timezone=True))
-    product_id = Column(Integer, ForeignKey("products.id"))
+    product_id = Column(Integer)
     status = Column(String(20), default="active")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -103,12 +74,10 @@ class Lead(Base):
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-
-# Inventory Models
 class InventoryItem(Base):
     __tablename__ = "inventory_items"
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), unique=True)
+    product_id = Column(Integer, unique=True)
     quantity_in_stock = Column(Integer, default=0)
     reorder_point = Column(Integer, default=10)
     warehouse_location = Column(String(50))
@@ -117,7 +86,7 @@ class InventoryItem(Base):
 class StockAlert(Base):
     __tablename__ = "stock_alerts"
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    product_id = Column(Integer, nullable=False)
     alert_type = Column(String(50))
     message = Column(Text)
     is_resolved = Column(String(10), default="no")
@@ -137,7 +106,7 @@ class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    product_id = Column(Integer, nullable=False)
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Float)
     total_amount = Column(Float)
